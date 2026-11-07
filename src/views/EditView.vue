@@ -122,7 +122,7 @@ async function loadTemplates(quiet = false): Promise<void> {
 
 // 把当前标题、分区、标签、简介存成模板
 async function saveTemplate(): Promise<void> {
-  // 浏览器预览不能写应用数据目录
+  // 浏览器预览不能写项目目录里的模板文件
   if (!desktop.value) {
     // 提示去桌面窗口
     ElMessage.warning("请用桌面窗口打开后再保存模板");
@@ -380,7 +380,7 @@ onMounted(() => {
           type="warning"
           :closable="false"
           show-icon
-          title="请用桌面窗口打开。浏览器预览不能把模板写进本机数据目录。"
+          title="请用桌面窗口打开。浏览器预览不能把模板写进项目目录。"
         />
         <!-- 读取失败 -->
         <el-alert v-if="loadError" type="error" :closable="false" show-icon :title="loadError" />

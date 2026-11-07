@@ -43,7 +43,7 @@ export interface SaveTemplateResult {
 
 // 当前是不是 Tauri 桌面窗口
 export function desktopReady(): boolean {
-  // 浏览器预览没有应用数据目录
+  // 浏览器预览写不了项目目录里的模板文件
   return isTauri();
 }
 

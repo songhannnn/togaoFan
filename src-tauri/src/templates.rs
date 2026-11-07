@@ -1,4 +1,4 @@
-// 文案模板只放在本机应用数据目录的一个 JSON 文件里
+// 文案模板放在项目目录的一个 JSON 文件里，不放应用数据目录
 use serde::{Deserialize, Serialize};
 // 读写这个 JSON 文件
 use std::fs;
@@ -8,12 +8,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 // 用时间生成不重复的模板编号
 use std::time::{SystemTime, UNIX_EPOCH};
-// 命令入参，用来拿到应用数据目录
-use tauri::AppHandle;
-// app_data_dir 挂在 Manager 上
-use tauri::Manager;
 
-// 应用数据目录里的文件名，不放视频和封面
+// 项目目录里的文件名，不放视频和封面
 const FILE_NAME: &str = "templates.json";
 // 整文件读写共用一把锁
 static FILE_LOCK: Mutex<()> = Mutex::new(());
@@ -73,46 +69,79 @@ pub struct SaveTemplateResult {
     pub created: bool,
 }
 
-// 算出本机要写的 JSON 路径，此时还不创建目录
-pub fn templates_path(app: &AppHandle) -> Result<PathBuf, String> {
-    // Tauri 按标识 com.tougaofang.app 给出的应用数据目录
-    let dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|err| format!("读不到应用数据目录：{err}"))?;
+// 算出项目目录下的 JSON 路径，此时还不创建文件
+pub fn templates_path() -> Result<PathBuf, String> {
+    // 运行这份代码的仓库根，npm run tauri dev 就在这里启动
+    let root = project_root()?;
     // 固定文件名，避免前端传入别的路径
-    Ok(dir.join(FILE_NAME))
+    Ok(root.join(FILE_NAME))
+}
+
+// 找到仓库根：同时有 package.json 和 src-tauri 的那一层
+fn project_root() -> Result<PathBuf, String> {
+    // 编译时写进程序的清单目录，就是 src-tauri
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    // 从清单目录往上找仓库根
+    if let Some(root) = find_project_root(&manifest_dir) {
+        // 用这份代码所在的项目目录
+        return Ok(root);
+    }
+    // 开发时进程当前目录通常就是仓库根，或是它的子目录
+    if let Ok(cwd) = std::env::current_dir() {
+        // 当前目录或它的上级
+        if let Some(root) = find_project_root(&cwd) {
+            // 用启动命令所在的项目目录
+            return Ok(root);
+        }
+    }
+    // 两边都找不到
+    Err("找不到项目目录，模板没有写成".to_string())
+}
+
+// 从起点往上找仓库根
+fn find_project_root(start: &Path) -> Option<PathBuf> {
+    // 先看起点自己
+    let mut current = Some(start);
+    // 一层层往上
+    while let Some(dir) = current {
+        // 仓库根同时有前端清单和 Tauri 目录
+        if dir.join("package.json").is_file() && dir.join("src-tauri").is_dir() {
+            // 找到了
+            return Some(dir.to_path_buf());
+        }
+        // 再看上一级
+        current = dir.parent();
+    }
+    // 没有
+    None
 }
 
 // 给界面展示文件会写到哪里
 #[tauri::command]
-pub fn template_store_path(app: AppHandle) -> Result<String, String> {
+pub fn template_store_path() -> Result<String, String> {
     // 转成系统路径字符串
-    Ok(templates_path(&app)?.to_string_lossy().to_string())
+    Ok(templates_path()?.to_string_lossy().to_string())
 }
 
 // 打开编辑页时读取全部模板
 #[tauri::command]
-pub fn list_copy_templates(app: AppHandle) -> Result<Vec<CopyTemplate>, String> {
+pub fn list_copy_templates() -> Result<Vec<CopyTemplate>, String> {
     // 只读这一个固定文件
-    list_at(&templates_path(&app)?)
+    list_at(&templates_path()?)
 }
 
 // 把当前四个文字字段存成模板
 #[tauri::command]
-pub fn save_copy_template(
-    app: AppHandle,
-    input: SaveTemplateInput,
-) -> Result<SaveTemplateResult, String> {
+pub fn save_copy_template(input: SaveTemplateInput) -> Result<SaveTemplateResult, String> {
     // 视频和封面不在入参里，也不会写进文件
-    save_at(&templates_path(&app)?, input)
+    save_at(&templates_path()?, input)
 }
 
 // 按编号删除一条模板
 #[tauri::command]
-pub fn delete_copy_template(app: AppHandle, id: String) -> Result<(), String> {
+pub fn delete_copy_template(id: String) -> Result<(), String> {
     // 编号只用来在 JSON 里查找，不当成路径
-    delete_at(&templates_path(&app)?, &id)
+    delete_at(&templates_path()?, &id)
 }
 
 // 读取模板；文件还不存在时当成空列表
@@ -308,10 +337,10 @@ fn read_templates(path: &Path) -> Result<TemplateFile, String> {
 
 // 先写临时文件，再换到正式文件名
 fn write_templates(path: &Path, file: &TemplateFile) -> Result<(), String> {
-    // 应用数据目录可能还没建
+    // 项目目录一般已经在，没有时再创建
     if let Some(parent) = path.parent() {
         // 只创建模板文件自己的目录
-        fs::create_dir_all(parent).map_err(|err| format!("无法创建应用数据目录：{err}"))?;
+        fs::create_dir_all(parent).map_err(|err| format!("无法创建模板所在目录：{err}"))?;
     }
     // 排版后的 JSON
     let mut bytes = serde_json::to_vec_pretty(file)
@@ -368,7 +397,9 @@ static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 #[cfg(test)]
 mod tests {
     // 父模块里的保存和删除
-    use super::{delete_at, list_at, save_at, sort_templates, CopyTemplate, SaveTemplateInput};
+    use super::{
+        delete_at, list_at, save_at, sort_templates, templates_path, CopyTemplate, SaveTemplateInput,
+    };
     // 读回文件文本，确认没有视频和封面
     use std::fs;
     // 每个测试用自己的临时路径
@@ -586,5 +617,26 @@ mod tests {
         sort_templates(&mut items);
         // 第一条是最近的
         assert_eq!(items[0].id, "b");
+    }
+
+    // 模板文件在仓库根，不在应用数据目录
+    #[test]
+    fn file_lives_in_project_root() {
+        // 算出路径
+        let path = templates_path().unwrap();
+        // 文件名固定
+        assert_eq!(path.file_name().unwrap(), "templates.json");
+        // 上一级是仓库根
+        let root = path.parent().unwrap();
+        // 有前端清单
+        assert!(root.join("package.json").is_file());
+        // 有 Tauri 目录
+        assert!(root.join("src-tauri").is_dir());
+        // 路径文本
+        let text = path.to_string_lossy().to_lowercase();
+        // 不是 Windows 的 AppData
+        assert!(!text.contains("appdata"));
+        // 不是按应用标识生成的数据目录
+        assert!(!text.contains("com.tougaofang.app"));
     }
 }
