@@ -1,0 +1,115 @@
+/* 窗口高度交给布局容器，控件皮肤交给 Element Plus */
+html,
+body,
+#app {
+  /* 侧栏和内容区按窗口排满 */
+  height: 100%;
+  /* 去掉浏览器默认边距 */
+  margin: 0;
+}
+
+/* 左右分栏 */
+.shell {
+  /* 高度锁在窗口里 */
+  height: 100%;
+  /* 分栏本身不滚动 */
+  overflow: hidden;
+}
+
+/* 左侧窄导航，浅底，不是深色栏 */
+.sidebar {
+  /* 浅灰底，用组件库的填充色 */
+  background: var(--el-fill-color-light);
+  /* 和右侧内容分开 */
+  border-right: 1px solid var(--el-border-color-lighter);
+  /* 产品名在上，菜单在下 */
+  display: flex;
+  /* 纵向 */
+  flex-direction: column;
+  /* 窗口很矮时侧栏自己滚动 */
+  overflow: auto;
+}
+
+/* 产品名 */
+.brand {
+  /* 去掉段落边距 */
+  margin: 0;
+  /* 留白按窄栏来，不做成大标题 */
+  padding: 20px 16px 8px;
+  /* 字号接近导航，不放大成海报 */
+  font-size: 16px;
+  /* 稍微加粗，便于认出产品 */
+  font-weight: 600;
+  /* 用组件库的正文色 */
+  color: var(--el-text-color-primary);
+}
+
+/* 四个菜单项 */
+.sidebar-menu {
+  /* 菜单右边那条线让给侧栏自己的边 */
+  border-right: none;
+  /* 跟侧栏同一个浅底 */
+  background: transparent;
+  /* 菜单底也透明 */
+  --el-menu-bg-color: transparent;
+  /* 行高靠近参考图的窄导航 */
+  --el-menu-item-height: 44px;
+  /* 悬停用组件库的一层灰 */
+  --el-menu-hover-bg-color: var(--el-fill-color);
+}
+
+/* 右侧表单区 */
+.content {
+  /* 页面浅底，卡片自己是白的 */
+  background: var(--el-bg-color-page);
+  /* 高度不够时允许收缩，滚动才出现在这一侧 */
+  min-height: 0;
+  /* 表单长了只滚右侧 */
+  overflow: auto;
+  /* 四周留白，接近投稿页内容区 */
+  padding: 24px 28px 48px;
+}
+
+/* 表单不要拉得过宽，长时间填写仍好读 */
+.page {
+  /* 限制行宽 */
+  max-width: 960px;
+}
+
+/* 页头和下面的卡片分开 */
+.page-row {
+  /* 下边距 */
+  margin-bottom: 16px;
+}
+
+/* 页面标题，字号按投稿页，不做成大字报 */
+.page-title {
+  /* 独占一行 */
+  display: block;
+  /* 去掉浏览器给 h1 的大边距 */
+  margin: 0 0 8px;
+  /* 接近内容区标题 */
+  font-size: 18px;
+  /* 标题字重 */
+  font-weight: 600;
+  /* 行高 */
+  line-height: 1.4;
+  /* 正文色 */
+  color: var(--el-text-color-primary);
+}
+
+/* 左标签对齐控件第一行，封面和简介不会把标签留在中间 */
+.edit-form .el-form-item {
+  /* 标签贴着控件顶部 */
+  align-items: flex-start;
+  /* 行距按投稿页留白 */
+  margin-bottom: 22px;
+}
+
+/* 标签行高和输入框对齐，星号也在同一行 */
+.edit-form .el-form-item__label {
+  /* 跟默认输入框一样高 */
+  height: 32px;
+  /* 文字垂直居中 */
+  line-height: 32px;
+}

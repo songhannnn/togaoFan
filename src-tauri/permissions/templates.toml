@@ -1,0 +1,21 @@
+# 只允许读写文案模板这四条命令，不开放任意文件路径
+
+[[permission]]
+identifier = "allow-template-store-path"
+description = "允许查看文案模板 JSON 会写到的本机路径"
+commands.allow = ["template_store_path"]
+
+[[permission]]
+identifier = "allow-list-copy-templates"
+description = "允许读取本机文案模板"
+commands.allow = ["list_copy_templates"]
+
+[[permission]]
+identifier = "allow-save-copy-template"
+description = "允许把标题、简介、标签和分区写入本机文案模板"
+commands.allow = ["save_copy_template"]
+
+[[permission]]
+identifier = "allow-delete-copy-template"
+description = "允许删除一条本机文案模板"
+commands.allow = ["delete_copy_template"]
