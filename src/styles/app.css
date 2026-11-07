@@ -12,6 +12,8 @@ body,
 .shell {
   /* 高度锁在窗口里 */
   height: 100%;
+  /* 横向铺满窗口 */
+  width: 100%;
   /* 分栏本身不滚动 */
   overflow: hidden;
 }
@@ -62,6 +64,10 @@ body,
 .content {
   /* 页面浅底，卡片自己是白的 */
   background: var(--el-bg-color-page);
+  /* 占满侧栏以外的宽度 */
+  flex: 1;
+  /* 宽窗口里允许这一侧继续变宽 */
+  min-width: 0;
   /* 高度不够时允许收缩，滚动才出现在这一侧 */
   min-height: 0;
   /* 表单长了只滚右侧 */
@@ -70,10 +76,33 @@ body,
   padding: 24px 28px 48px;
 }
 
-/* 表单不要拉得过宽，长时间填写仍好读 */
+/* 四个页面都跟着内容区变宽 */
 .page {
-  /* 限制行宽 */
-  max-width: 960px;
+  /* 用满右侧可用宽度 */
+  width: 100%;
+  /* 不再把表单限制成窄列 */
+  max-width: none;
+}
+
+/* 视频选择区用表单的可用宽度 */
+.edit-form .el-upload.is-drag {
+  /* 拉满这一行 */
+  width: 100%;
+}
+
+/* 拖拽框跟着上传组件变宽 */
+.edit-form .el-upload-dragger {
+  /* 不用组件里可能写死的窄宽度 */
+  width: 100%;
+  /* 边框算在宽度里 */
+  box-sizing: border-box;
+}
+
+/* 标题、分区、标签和简介占满表单内容区 */
+.edit-form .el-form-item__content > .el-input,
+.edit-form .el-form-item__content > .el-textarea {
+  /* 随窗口变宽 */
+  width: 100%;
 }
 
 /* 页头和下面的卡片分开 */
